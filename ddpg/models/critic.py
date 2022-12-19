@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -44,6 +44,12 @@ class Critic(nn.Module):
     @property
     def hidden_layers(self) -> int:
         return self._hidden_layers
+
+    def architecture(self) -> Dict[str, str]:
+        return {
+            "input_dim": self._input_dim,
+            "hidden_layers": " | ".join(map(str, self._hidden_layers)),
+        }
 
     def forward(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
         """Forward pass on NN. Computes Q(state, action) based on current state and action

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -66,6 +66,14 @@ class Actor(nn.Module):
     @property
     def max_output(self) -> float:
         return self._max_output
+
+    def architecture(self) -> Dict[str, str]:
+        return {
+            "input_dim": self._input_dim,
+            "hidden_layers": " | ".join(map(str, self._hidden_layers)),
+            "output_dim": self._output_dim,
+            "max_output": self._max_output,
+        }
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """Forward pass on NN. Computes actions (output) based on current state (inputs)
