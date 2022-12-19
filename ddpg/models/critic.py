@@ -12,9 +12,7 @@ class Critic(nn.Module):
         hidden_layers (List[int]): List of hidden layers' units
     """
 
-    def __init__(
-        self, input_dim: int, hidden_layers: List[int]
-    ) -> None:
+    def __init__(self, input_dim: int, hidden_layers: List[int]) -> None:
         """Constructor method of Critic object.
 
         Args:
@@ -30,13 +28,13 @@ class Critic(nn.Module):
 
         hidden_layers = [self._input_dim] + hidden_layers
         self._fc = []
-        
-        self._fc = nn.Sequential(*[
-            nn.Sequential(
-                nn.Linear(in_, out_), nn.ReLU()
-            )
-            for in_, out_ in zip(hidden_layers, hidden_layers[1:])
-        ])
+
+        self._fc = nn.Sequential(
+            *[
+                nn.Sequential(nn.Linear(in_, out_), nn.ReLU())
+                for in_, out_ in zip(hidden_layers, hidden_layers[1:])
+            ]
+        )
         self._out = nn.Sequential(nn.Linear(hidden_layers[-1], 1))
 
     @property
@@ -58,6 +56,4 @@ class Critic(nn.Module):
             torch.Tensor: Q(state, action) tensor (N, 1).
         """
         inputs = torch.cat([state, action], axis=-1)
-        return self._out(
-            self._fc(inputs)
-        )
+        return self._out(self._fc(inputs))

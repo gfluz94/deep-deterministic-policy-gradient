@@ -62,9 +62,7 @@ class MemoryBuffer(object):
                 f"Current transitions length {len(self)} less than batch size of {batch_size}."
             )
         indices = np.random.randint(low=0, high=len(self), size=batch_size)
-        states, actions, rewards, next_states, dones = (
-            [] for _ in range(5)
-        )
+        states, actions, rewards, next_states, dones = ([] for _ in range(5))
         for idx in indices:
             transition = self._transitions[idx]
             states.append(transition.state)

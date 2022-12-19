@@ -15,7 +15,11 @@ class Actor(nn.Module):
     """
 
     def __init__(
-        self, input_dim: int, hidden_layers: List[int], output_dim: int, max_output: float
+        self,
+        input_dim: int,
+        hidden_layers: List[int],
+        output_dim: int,
+        max_output: float,
     ) -> None:
         """Constructor method of Actor object.
 
@@ -36,16 +40,16 @@ class Actor(nn.Module):
 
         hidden_layers = [self._input_dim] + hidden_layers
         self._fc = []
-        
-        self._fc = nn.Sequential(*[
-            nn.Sequential(
-                nn.Linear(in_, out_), nn.ReLU()
-            )
-            for in_, out_ in zip(hidden_layers, hidden_layers[1:])
-        ])
+
+        self._fc = nn.Sequential(
+            *[
+                nn.Sequential(nn.Linear(in_, out_), nn.ReLU())
+                for in_, out_ in zip(hidden_layers, hidden_layers[1:])
+            ]
+        )
         self._out = nn.Sequential(
-                nn.Linear(hidden_layers[-1], self._output_dim), nn.Tanh()
-            )
+            nn.Linear(hidden_layers[-1], self._output_dim), nn.Tanh()
+        )
 
     @property
     def input_dim(self) -> int:
@@ -72,6 +76,4 @@ class Actor(nn.Module):
         Returns:
             torch.Tensor: Action tensor.
         """
-        return self._max_output*self._out(
-            self._fc(inputs)
-        )
+        return self._max_output * self._out(self._fc(inputs))
