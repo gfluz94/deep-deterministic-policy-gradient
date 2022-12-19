@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 
 from ddpg.replay_buffer.transition import Transition
+from ddpg.replay_buffer.errors import MemoryLowerThanBatchSize
 
 
 class MemoryBuffer(object):
@@ -56,6 +57,8 @@ class MemoryBuffer(object):
         Returns:
             Tuple[np.ndarray]: Numpy arrays of states, actions, rewards, next states and dones.
         """
+        if batch_size > self.__len__():
+            raise MemoryLowerThanBatchSize(f"Current transitions length {self.__len__()} less than batch size of {batch_size}.")
         indices = np.random.randint(low=0, high=self.__len__(), size=batch_size)
         states, actions, rewards, next_states, dones = ([] for _ in range(len(Transition.__annotations__)))
         for idx in indices:

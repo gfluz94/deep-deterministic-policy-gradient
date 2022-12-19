@@ -1,0 +1,2 @@
+class MemoryLowerThanBatchSize(Exception):
+    pass
