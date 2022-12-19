@@ -4,6 +4,7 @@ import numpy as np
 
 from ddpg.replay_buffer.transition import Transition
 
+
 @pytest.fixture(scope="module")
 def transition_not_done() -> Transition:
     return Transition(
@@ -11,7 +12,7 @@ def transition_not_done() -> Transition:
         action=np.array([1.0, -1.0, 1.0]),
         reward=0.25,
         next_state=np.array([1.5, 0.0, 0.80]),
-        done=False
+        done=False,
     )
 
 
@@ -22,8 +23,9 @@ def arrays_not_done() -> Tuple[np.ndarray]:
         np.array([[1.0, -1.0, 1.0]]),
         np.array([[0.25]]),
         np.array([[1.5, 0.0, 0.80]]),
-        np.array([[0.0]])
+        np.array([[0.0]]),
     )
+
 
 @pytest.fixture(scope="module")
 def transition_done() -> Transition:
@@ -32,8 +34,9 @@ def transition_done() -> Transition:
         action=np.array([1.0, -1.0, 1.0]),
         reward=0.25,
         next_state=np.array([1.5, 0.0, 0.80]),
-        done=True
+        done=True,
     )
+
 
 @pytest.fixture(scope="module")
 def arrays_done() -> Tuple[np.ndarray]:
@@ -42,5 +45,5 @@ def arrays_done() -> Tuple[np.ndarray]:
         np.array([[1.0, -1.0, 1.0]]),
         np.array([[0.25]]),
         np.array([[1.5, 0.0, 0.80]]),
-        np.array([[1.0]])
+        np.array([[1.0]]),
     )
