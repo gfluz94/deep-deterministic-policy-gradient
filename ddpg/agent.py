@@ -2,7 +2,7 @@ from typing import List
 import numpy as np
 import torch
 
-from ddpg.models import Actor, Critic
+from ddpg.models import Actor, Critic, save_model, load_model
 from ddpg.replay_buffer import MemoryBuffer
 
 _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -114,6 +114,14 @@ class DDPG(object):
         with torch.no_grad():
             action = self._actor(torch.Tensor(state)).cpu().data.numpy().reshape(-1)
         return action
+
+    def save(self, filepreffix: str) -> None:
+        save_model(self._actor.architecture(), f"{filepreffix}_actor.pt")
+        save_model(self._critic.architecture(), f"{filepreffix}_critic.pt")
+
+    def load(self, filepreffix: str) -> None:
+        self._actor = load_model(f"{filepreffix}_actor.pt", model_class=Actor)
+        self._critic = load_model(f"{filepreffix}_critic.pt", model_class=Critic)
 
     def train(
         self,
