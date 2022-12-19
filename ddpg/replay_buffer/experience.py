@@ -15,7 +15,7 @@ class MemoryBuffer(object):
         max_length (int): Maximum length of transitions stored in the memory
     """
 
-    def __init__(self, max_length: int = 1e4) -> None:
+    def __init__(self, max_length: int = 1e5) -> None:
         """Constructor method of MemoryBuffer object.
 
         Args:
