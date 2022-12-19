@@ -4,6 +4,7 @@ import torch
 from ddpg.models.actor import Actor
 from ddpg.models.critic import Critic
 
+
 def save_model(model: Union[Actor, Critic], filepath: str) -> None:
     """Function to save Actor/Critic models.
 
@@ -14,6 +15,7 @@ def save_model(model: Union[Actor, Critic], filepath: str) -> None:
     architecture = model.architecture()
     architecture["state_dict"] = model.state_dict()
     torch.save(architecture, filepath)
+
 
 def load_model(filepath: str, model_class: object) -> Union[Actor, Critic]:
     """Function to load Actor/Critic models.
@@ -26,7 +28,9 @@ def load_model(filepath: str, model_class: object) -> Union[Actor, Critic]:
         Union[Actor, Critic]: Retrieved model
     """
     architecture = torch.load(filepath)
-    architecture["hidden_layers"] = list(map(int, architecture["hidden_layers"].split(" | ")))
+    architecture["hidden_layers"] = list(
+        map(int, architecture["hidden_layers"].split(" | "))
+    )
 
     state_dict = architecture["state_dict"]
     del architecture["state_dict"]
@@ -35,5 +39,3 @@ def load_model(filepath: str, model_class: object) -> Union[Actor, Critic]:
     model.load_state_dict(state_dict)
 
     return model
-    
-

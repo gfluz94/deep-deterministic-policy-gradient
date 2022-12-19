@@ -116,8 +116,8 @@ class DDPG(object):
         return action
 
     def save(self, filepreffix: str) -> None:
-        save_model(self._actor.architecture(), f"{filepreffix}_actor.pt")
-        save_model(self._critic.architecture(), f"{filepreffix}_critic.pt")
+        save_model(self._actor, f"{filepreffix}_actor.pt")
+        save_model(self._critic, f"{filepreffix}_critic.pt")
 
     def load(self, filepreffix: str) -> None:
         self._actor = load_model(f"{filepreffix}_actor.pt", model_class=Actor)
@@ -127,8 +127,7 @@ class DDPG(object):
         self,
         replay_buffer: MemoryBuffer,
         batch_size: int,
-        action_noise: float,
-        maximum_noise_value: float,
+        episode_length: int,
         tau: float = 0.99,
     ) -> None:
         """Method that performs training of actor/critic models.
@@ -136,36 +135,24 @@ class DDPG(object):
         Args:
             replay_buffer (MemoryBuffer): Memory buffer so that transitions are retrieved.
             batch_size (int): Batch size for transitions retrieval.
-            action_noise (float): Standard deviation of Gaussian Noise applied to next action.
-            maximum_noise_value (float): Maximum noise value allowed.
+            episode_length (int): Number of episodes played.
             tau (float): Learning rate for soft update of target actor/critic models.
         """
-        states, actions, rewards, next_states, dones = replay_buffer.sample(
-            batch_size=batch_size
-        )
         self._actor = self._actor.train()
-        for idx, state_, action_, reward_, next_state_, done_ in enumerate(
-            zip(states, actions, rewards, next_states, dones)
-        ):
+        for idx in range(episode_length):
+            # Sample from batch
+            states, actions, rewards, next_states, dones = replay_buffer.sample(
+                batch_size=batch_size
+            )
             # Converting to tensors
-            state = torch.Tensor(state_).to(device=_DEVICE)
-            action = torch.Tensor(action_).to(device=_DEVICE)
-            reward = torch.Tensor(reward_).to(device=_DEVICE)
-            next_state = torch.Tensor(next_state_).to(device=_DEVICE)
-            done = torch.Tensor(done_).to(device=_DEVICE)
+            state = torch.Tensor(states).to(device=_DEVICE)
+            action = torch.Tensor(actions).to(device=_DEVICE)
+            reward = torch.Tensor(rewards).to(device=_DEVICE)
+            next_state = torch.Tensor(next_states).to(device=_DEVICE)
+            done = torch.Tensor(dones).to(device=_DEVICE)
 
             # Using actor target to predict next action on next state
-            next_action = self._actor_target(next_state)
-
-            # Add noise to action, so that we allow for exploration
-            noise = torch.Tensor(next_action).data.normal_(mean=0, std=action_noise)
-            noise.clamp_(min=-maximum_noise_value, max=maximum_noise_value)
-            # Detach is critical to compute gradients correctly (only predicted)
-            next_action = (
-                (next_action + noise)
-                .clamp(min=-self._max_action_value, max=self._max_action_value)
-                .detach()
-            )
+            next_action = self._actor_target(next_state).detach()
 
             # Computing target Q(s, a)
             target_Q = reward + (
