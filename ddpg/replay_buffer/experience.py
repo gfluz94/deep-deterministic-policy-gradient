@@ -43,7 +43,7 @@ class MemoryBuffer(object):
         Returns:
             (None)
         """
-        if self.__len__() >= self._max_length:
+        if len(self) >= self._max_length:
             self._transitions = [transition] + self._transitions[1:]
         else:
             self._transitions.append(transition)
@@ -57,13 +57,13 @@ class MemoryBuffer(object):
         Returns:
             Tuple[np.ndarray]: Numpy arrays of states, actions, rewards, next states and dones.
         """
-        if batch_size > self.__len__():
+        if batch_size > len(self):
             raise MemoryLowerThanBatchSize(
-                f"Current transitions length {self.__len__()} less than batch size of {batch_size}."
+                f"Current transitions length {len(self)} less than batch size of {batch_size}."
             )
-        indices = np.random.randint(low=0, high=self.__len__(), size=batch_size)
+        indices = np.random.randint(low=0, high=len(self), size=batch_size)
         states, actions, rewards, next_states, dones = (
-            [] for _ in range(len(Transition.__annotations__))
+            [] for _ in range(5)
         )
         for idx in indices:
             transition = self._transitions[idx]
