@@ -27,8 +27,8 @@ class TestDDPG(object):
 
         # EXPECTED
         expected_output = np.array(
-            [0.15068813, 0.84335005, -0.6132773, 0.6884175, -2.29879]
+            [0.15068813, 0.84335005, -0.6132773, 0.6884175, -2.29879], dtype=np.float32
         )
 
         # ASSERT
-        assert (np.float32(output) == np.float32(expected_output)).all()
+        assert (np.round(output, 6) == np.round(expected_output, 6)).all()

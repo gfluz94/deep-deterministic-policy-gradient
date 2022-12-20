@@ -43,12 +43,13 @@ class TestActor(object):
             max_output=max_output,
         )
         x = torch.ones(size=(1, input_dim))
-        output = actor(x)
+        output = actor(x).detach().numpy()
 
         # EXPECTED
-        expected_output = torch.Tensor(
-            np.array([[0.15068813, 0.84335005, -0.6132773, 0.6884175, -2.29879]])
+        expected_output = np.array(
+            [[0.15068813, 0.84335005, -0.6132773, 0.6884175, -2.29879]],
+            dtype=np.float32,
         )
 
         # ASSERT
-        assert (output.detach().numpy() == expected_output.detach().numpy()).all()
+        assert (np.round(output, 6) == np.round(expected_output, 6)).all()
