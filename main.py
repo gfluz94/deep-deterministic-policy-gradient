@@ -134,7 +134,7 @@ if __name__ == "__main__":
         metavar="N",
         type=int,
         help="Frequency with which we updated target network weights.",
-        default=2,
+        default=1,
     )
     parser.add_argument(
         "--evaluation-freq",
@@ -227,7 +227,7 @@ if __name__ == "__main__":
         )
 
         transition = Transition(
-            state=obs, action=action, reward=reward, next_state=new_obs, done=done
+            state=obs, action=action, reward=reward, next_state=new_obs, done=done_transition
         )
 
         replay_experience.add(transition)
