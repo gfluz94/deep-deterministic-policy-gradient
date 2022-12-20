@@ -61,5 +61,5 @@ class Critic(nn.Module):
         Returns:
             torch.Tensor: Q(state, action) tensor (N, 1).
         """
-        inputs = torch.cat([state, action], axis=-1)
+        inputs = torch.cat([state, action], axis=1)
         return self._out(self._fc(inputs))
