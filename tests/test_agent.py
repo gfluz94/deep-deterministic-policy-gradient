@@ -31,4 +31,4 @@ class TestDDPG(object):
         )
 
         # ASSERT
-        assert (np.round(output, 5) == np.round(expected_output, 5)).all()
+        assert (np.round(output, 6) == np.round(expected_output, 6)).all()

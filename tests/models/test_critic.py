@@ -28,10 +28,10 @@ class TestCritic(object):
         critic = Critic(input_dim=input_dim, hidden_layers=hidden_layers)
         x1 = torch.ones(size=(1, input_dim // 2))
         x2 = torch.ones(size=(1, input_dim // 2))
-        output = critic(x1, x2)
+        output = critic(x1, x2).detach().numpy()
 
         # EXPECTED
-        expected_output = torch.Tensor(np.array([[0.0639877]]))
+        expected_output = np.array([[0.0639877]], dtype=np.float32)
 
         # ASSERT
-        assert (output.detach().numpy() == expected_output.detach().numpy()).all()
+        assert (np.round(output, 6) == np.round(expected_output, 6)).all()
