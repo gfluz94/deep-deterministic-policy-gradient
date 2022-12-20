@@ -112,7 +112,7 @@ class DDPG(object):
         """
         self._actor = self._actor.eval()
         with torch.no_grad():
-            action = self._actor(torch.Tensor(state)).cpu().data.numpy().reshape(-1)
+            action = self._actor(torch.Tensor(state.reshape(1, -1))).cpu().data.numpy().reshape(-1)
         return action
 
     def save(self, filepreffix: str) -> None:
