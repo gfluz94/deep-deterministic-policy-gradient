@@ -1,8 +1,10 @@
+from enum import Enum
 import os
 from argparse import ArgumentParser
 import numpy as np
 import pybullet_envs
 import gym
+from gym import wrappers
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -10,6 +12,11 @@ warnings.filterwarnings("ignore")
 from ddpg import DDPG
 from ddpg.replay_buffer import MemoryBuffer
 from ddpg.replay_buffer.transition import Transition
+
+
+class RunMode(Enum):
+    train = 1
+    test = 2
 
 
 def evaluate_policy(env: gym.Env, policy: DDPG, eval_episodes: int = 10) -> float:
@@ -42,6 +49,12 @@ if __name__ == "__main__":
     print("Setting up hyperparameters...")
     parser = ArgumentParser(
         description="Input parameters for RL with DDPG in a continuous environment."
+    )
+    parser.add_argument(
+        "mode",
+        type=str,
+        choices=list(RunMode.__members__.keys()),
+        default=RunMode.train.name,
     )
     parser.add_argument(
         "--checkpoint-folder",
@@ -115,20 +128,6 @@ if __name__ == "__main__":
         default=0.99,
     )
     parser.add_argument(
-        "--policy-noise",
-        metavar="N",
-        type=float,
-        help="Standard deviation of Gaussian Noise when following policy.",
-        default=0.10,
-    )
-    parser.add_argument(
-        "--noise-clip",
-        metavar="N",
-        type=float,
-        help="Maximum size of Gaussian Noise added to actions.",
-        default=0.50,
-    )
-    parser.add_argument(
         "--policy-freq",
         metavar="N",
         type=int,
@@ -143,9 +142,14 @@ if __name__ == "__main__":
         default=5e3,
     )
     args = parser.parse_args()
+
+    CHECKPOINT_FOLDER = os.path.join(os.curdir, args.checkpoint_folder)
+    MODELS_FOLDER = os.path.join(CHECKPOINT_FOLDER, "models")
+    MONITOR_FOLDER = os.path.join(CHECKPOINT_FOLDER, "monitor")
+
     print("Hyperaparameters set up!")
 
-    print("Instantiating environment, TD3 Agent and Replay Experience...")
+    print("Instantiating environment and DDPG Agent...")
     env = gym.make(args.env_name)
     env.seed(args.seed)
     state_dim = env.observation_space.shape[0]
@@ -159,88 +163,101 @@ if __name__ == "__main__":
         discount_factor=args.discount_factor,
         policy_update_freq=args.policy_freq,
     )
-    replay_experience = MemoryBuffer()
     print("Agent and environment ready!")
 
-    print("Creating folders and filenames for checkpoints/artifacts...")
-    CHECKPOINT_FOLDER = os.path.join(os.curdir, args.checkpoint_folder)
-    MODELS_FOLDER = os.path.join(CHECKPOINT_FOLDER, "models")
-    if not os.path.exists(CHECKPOINT_FOLDER):
-        os.makedirs(CHECKPOINT_FOLDER)
-        os.makedirs(MODELS_FOLDER)
-    print("Everything ready!")
+    if args.mode == RunMode.train.name:
+        print("Creating folders and filenames for checkpoints/artifacts...")
+        if not os.path.exists(CHECKPOINT_FOLDER):
+            os.makedirs(CHECKPOINT_FOLDER)
+            os.makedirs(MODELS_FOLDER)
+        print("Everything ready!")
 
-    print("Starting training process...")
-    total_timesteps = 0
-    timesteps_since_eval = 0
-    episode_num = 0
-    episode_reward = 0
-    done = True
+        print("Starting training process...")
+        replay_experience = MemoryBuffer()
 
-    evaluations = [evaluate_policy(env, agent)]
-    while total_timesteps < args.max_time_steps:
+        total_timesteps = 0
+        timesteps_since_eval = 0
+        episode_num = 0
+        episode_reward = 0
+        done = True
 
-        if done:
+        evaluations = [evaluate_policy(env, agent)]
+        while total_timesteps < args.max_time_steps:
 
-            if total_timesteps != 0 and len(replay_experience) > args.batch_size:
-                print(
-                    f"\tTotal time steps: {total_timesteps} Episode Num: {episode_num} Reward {episode_reward:.2f}"
-                )
-                agent.train(
-                    replay_buffer=replay_experience,
-                    batch_size=args.batch_size,
-                    tau=args.tau,
-                    episode_length=episode_timesteps,
-                )
+            if done:
 
-            if timesteps_since_eval >= args.evaluation_freq:
-                timesteps_since_eval %= args.evaluation_freq
-                evaluations.append(evaluate_policy(env, agent))
-                agent.save(os.path.join(MODELS_FOLDER, "model"))
-                np.save(os.path.join(CHECKPOINT_FOLDER, "results"), evaluations)
-
-            obs = env.reset()
-            done = False
-
-            episode_reward = 0
-            episode_timesteps = 0
-            episode_num += 1
-
-        if total_timesteps < args.start_timesteps:
-            action = env.action_space.sample()
-        else:
-            action = agent.take_action(np.array(obs))
-            if args.exploration_gaussian_noise > 0:
-                action = (
-                    action
-                    + np.random.normal(
-                        loc=0.0, scale=args.exploration_gaussian_noise, size=action_dim
+                if total_timesteps != 0 and len(replay_experience) > args.batch_size:
+                    print(
+                        f"\tTotal time steps: {total_timesteps} Episode Num: {episode_num} Reward {episode_reward:.2f}"
                     )
-                ).clip(env.action_space.low, env.action_space.high)
+                    agent.train(
+                        replay_buffer=replay_experience,
+                        batch_size=args.batch_size,
+                        tau=args.tau,
+                        episode_length=episode_timesteps,
+                    )
 
-        new_obs, reward, done, _ = env.step(action)
-        done_transition = (
-            False if (episode_timesteps + 1) == env._max_episode_steps else done
-        )
+                if timesteps_since_eval >= args.evaluation_freq:
+                    timesteps_since_eval %= args.evaluation_freq
+                    evaluations.append(evaluate_policy(env, agent))
+                    agent.save(os.path.join(MODELS_FOLDER, "model"))
+                    np.save(os.path.join(CHECKPOINT_FOLDER, "results"), evaluations)
 
-        transition = Transition(
-            state=obs,
-            action=action,
-            reward=reward,
-            next_state=new_obs,
-            done=done_transition,
-        )
+                obs = env.reset()
+                done = False
 
-        replay_experience.add(transition)
-        episode_reward += reward
+                episode_reward = 0
+                episode_timesteps = 0
+                episode_num += 1
 
-        obs = new_obs
-        episode_timesteps += 1
-        total_timesteps += 1
-        timesteps_since_eval += 1
+            if total_timesteps < args.start_timesteps:
+                action = env.action_space.sample()
+            else:
+                action = agent.take_action(np.array(obs))
+                if args.exploration_gaussian_noise > 0:
+                    action = (
+                        action
+                        + np.random.normal(
+                            loc=0.0,
+                            scale=args.exploration_gaussian_noise,
+                            size=action_dim,
+                        )
+                    ).clip(env.action_space.low, env.action_space.high)
 
-    evaluations.append(evaluate_policy(env, agent))
-    agent.save(os.path.join(MODELS_FOLDER, "model"))
-    np.save(os.path.join(CHECKPOINT_FOLDER, "results"), evaluations)
+            new_obs, reward, done, _ = env.step(action)
+            done_transition = (
+                False if (episode_timesteps + 1) == env._max_episode_steps else done
+            )
 
-    print("Training finished!")
+            transition = Transition(
+                state=obs,
+                action=action,
+                reward=reward,
+                next_state=new_obs,
+                done=done_transition,
+            )
+
+            replay_experience.add(transition)
+            episode_reward += reward
+
+            obs = new_obs
+            episode_timesteps += 1
+            total_timesteps += 1
+            timesteps_since_eval += 1
+
+        evaluations.append(evaluate_policy(env, agent))
+        agent.save(os.path.join(MODELS_FOLDER, "model"))
+        np.save(os.path.join(CHECKPOINT_FOLDER, "results"), evaluations)
+
+        print("Training finished!")
+
+    elif args.mode == RunMode.test.name:
+        print("Loading agent parameters...")
+        agent.load(filepreffix=os.path.join(MODELS_FOLDER, "model"))
+        print("Agent ready after training!")
+
+        print("Interacting with environment...")
+        env = wrappers.Monitor(env, MONITOR_FOLDER, force=True)
+        env.reset()
+        _ = evaluate_policy(env, agent)
+        print("Episodes finished!")
