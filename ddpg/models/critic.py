@@ -63,3 +63,16 @@ class Critic(nn.Module):
         """
         inputs = torch.cat([state, action], axis=1)
         return self._out(self._fc(inputs))
+
+    def Q(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+        """Same as forward pass, but to allow for policy gradient.
+
+        Args:
+            state (torch.Tensor): Current state tensor.
+            action (torch.Tensor): Action tensor.
+
+        Returns:
+            torch.Tensor: Q(state, action) tensor (N, 1).
+        """
+        inputs = torch.cat([state, action], axis=1)
+        return self._out(self._fc(inputs))

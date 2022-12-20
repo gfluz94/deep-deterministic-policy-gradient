@@ -112,7 +112,12 @@ class DDPG(object):
         """
         self._actor = self._actor.eval()
         with torch.no_grad():
-            action = self._actor(torch.Tensor(state.reshape(1, -1))).cpu().data.numpy().reshape(-1)
+            action = (
+                self._actor(torch.Tensor(state.reshape(1, -1)))
+                .cpu()
+                .data.numpy()
+                .reshape(-1)
+            )
         return action
 
     def save(self, filepreffix: str) -> None:
@@ -152,12 +157,17 @@ class DDPG(object):
             done = torch.Tensor(dones).to(device=_DEVICE)
 
             # Using actor target to predict next action on next state
-            next_action = self._actor_target(next_state).detach()
+            next_action = self._actor_target(next_state)
 
             # Computing target Q(s, a)
-            target_Q = reward + (
-                1 - done
-            ) * self._discount_factor * self._critic_target(next_state, next_action)
+            target_Q = (
+                reward
+                + (
+                    (1 - done)
+                    * self._discount_factor
+                    * self._critic_target(next_state, next_action)
+                ).detach()
+            )
 
             # Predicted Q(s, a) with critic model
             predicted_Q = self._critic(state, action)
@@ -168,13 +178,13 @@ class DDPG(object):
             Q_loss.backward()
             self._critic_optimizer.step()
 
-            # Backpropagation for actor network
-            loss_actor = -self._critic(state, self._actor(state)).mean()
-            self._actor_optimizer.zero_grad()
-            loss_actor.backward()
-            self._actor_optimizer.step()
-
             if idx % self._policy_update_freq == 0:
+
+                # Backpropagation for actor network
+                loss_actor = -self._critic.Q(state, self._actor(state)).mean()
+                self._actor_optimizer.zero_grad()
+                loss_actor.backward()
+                self._actor_optimizer.step()
 
                 # Update actor target network
                 for param, target_param in zip(

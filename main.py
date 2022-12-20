@@ -1,7 +1,6 @@
 import os
 from argparse import ArgumentParser
 import numpy as np
-import torch
 import pybullet_envs
 import gym
 import warnings
@@ -92,14 +91,14 @@ if __name__ == "__main__":
         metavar="N",
         type=float,
         help="Standard deviation of Gaussian Noise when exploring.",
-        default=0.10,
+        default=0.20,
     )
     parser.add_argument(
         "--batch_size",
         metavar="N",
         type=int,
         help="Size of the batch during training.",
-        default=32,
+        default=128,
     )
     parser.add_argument(
         "--discount-factor",
@@ -113,7 +112,7 @@ if __name__ == "__main__":
         metavar="N",
         type=float,
         help="Target network update rate.",
-        default=0.995,
+        default=0.99,
     )
     parser.add_argument(
         "--policy-noise",
@@ -134,7 +133,7 @@ if __name__ == "__main__":
         metavar="N",
         type=int,
         help="Frequency with which we updated target network weights.",
-        default=1,
+        default=2,
     )
     parser.add_argument(
         "--evaluation-freq",
@@ -221,13 +220,15 @@ if __name__ == "__main__":
 
         new_obs, reward, done, _ = env.step(action)
         done_transition = (
-            False
-            if (episode_timesteps + 1) == env._max_episode_steps and not done
-            else done
+            False if (episode_timesteps + 1) == env._max_episode_steps else done
         )
 
         transition = Transition(
-            state=obs, action=action, reward=reward, next_state=new_obs, done=done_transition
+            state=obs,
+            action=action,
+            reward=reward,
+            next_state=new_obs,
+            done=done_transition,
         )
 
         replay_experience.add(transition)
