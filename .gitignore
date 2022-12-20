@@ -130,3 +130,6 @@ dmypy.json
 
 # Results achieved folder
 results/
+
+# DS Store
+.DS_Store
