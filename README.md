@@ -24,7 +24,7 @@ This project is structured as follows:
 
 #### main.py
 
-Script where code is executed either for training or testing (interaction with environment) once agent has alreayd been trained.
+Script where code is executed either for training or testing (interaction with environment) once agent has already been trained.
 
 ```py
 python3 main.py [train|test] --env [ENV_NAME] [+ parameters]

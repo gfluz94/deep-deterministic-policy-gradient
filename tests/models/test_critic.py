@@ -34,4 +34,4 @@ class TestCritic(object):
         expected_output = np.array([[0.0639877]], dtype=np.float32)
 
         # ASSERT
-        assert (np.round(output, 6) == np.round(expected_output, 6)).all()
+        assert (np.round(output, 5) == np.round(expected_output, 5)).all()
